@@ -2,7 +2,11 @@
   (:require
    [clojure.java.jdbc :as j]
    [honeysql.core :as sql]
-   [honeysql.helpers :refer :all])
+   [org.httpkit.server :refer [run-server
+                               with-channel
+                               on-close
+                               on-receive
+                               send!]])
   (:gen-class))
 
 (def db-spec {:dbtype "postgresql"
@@ -14,29 +18,33 @@
 (def db-query (partial j/query db-spec))
 (def db-exec! (partial j/execute! db-spec))
 
-(defn uuid-generate-random []
-  (.toString (java.util.UUID/randomUUID)))
+(defn uuid-generate-v4 []
+  (java.util.UUID/randomUUID))
 
-(defn create-service [name]
-  (let [uuid (uuid-generate-random)]
-    (-> (insert-into :services)
-        (columns :id :name)
-        (values [[uuid name]])
-        sql/format
-        println)
-    (j/get-by-id db-spec "services" uuid)))
+(defn uuid-from-string [uuid]
+  (java.util.UUID/fromString uuid))
 
-(defn get-by-id [table id]
-  (-> (select :*)
-      (from (keyword table))
-      (where [:= :id :?id])
-      (sql/format :params {:id id})
-      db-query))
+(defn uuid-to-string [uuid]
+  (.toString uuid))
 
-(j/query db-spec
-         ["SELECT * FROM services;"])
+(def channel-states (atom {}))
+
+(defn rpc-ws-handler [request]
+  (with-channel request channel
+    (on-close channel
+              (fn [status]
+                (println "channel connection closed.")
+                (swap! channel-states dissoc channel)))
+    (on-receive channel
+                (fn [data]
+                  (println "channel data received.")
+                  (let [state (get @channel-states channel {:count 0})]
+                    (println state)
+                    (send! channel (format "%s, count: %d" data (:count state)))
+                    (swap! channel-states assoc channel (update state :count inc)))))))
 
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
-  (println "Hello, World!"))
+  (println "Start WebSocket server at :9090")
+  (run-server rpc-ws-handler {:port 9090}))

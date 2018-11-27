@@ -6,7 +6,7 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/java.jdbc "0.7.8"]
                  [org.postgresql/postgresql "42.2.5"]
-                 [pg-types "2.3.0"]
+                 [http-kit "2.3.0"]
                  [honeysql "0.9.4"]]
   :main ^:skip-aot flugger.core
   :target-path "target/%s"
