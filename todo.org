@@ -1,0 +1,39 @@
+#+TITLE: Flugger (Instant messaging platform)
+#+AUTHOR: Valerij Stukanov
+
+* Database [1/3] *
+  - [ ] ASYNC DB client
+  - [X] Entity API
+  - [-] Models (CRUD operations)
+    - [X] Services
+    - [ ] Users
+    - [ ] Channels
+    - [ ] Members
+    - [ ] Messages
+
+* Messaging logic [0/5] *
+  - [ ] Get channel messages with pagination
+  - [ ] Send message to channel
+  - [ ] Notify channel members of new message
+  - [ ] Get channel members
+  - [ ] Update consumption horizont status
+
+* Channels logic [0/2] *
+  - [ ] Create channel
+  - [ ] Invite user to channel
+
+* RPC [0/5] *
+  - [ ] Async WebSocket server (aleph)
+  - [ ] RPC message pack/unpack
+  - [ ] Authorize call
+    - [ ] JWT signing check
+    - [ ] Provide context (service, user)
+  - [ ] Validate call (parameters)
+  - [ ] Catch call errors
+
+* Notifications *
+** TODO User bindings
+** TODO FCM Integration
+** TODO APNS Integration
+** TODO Sielent notifications
+* Back Office *
