@@ -5,6 +5,8 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :plugins [[lein-protobuf "0.5.0"]]
   :dependencies [[org.clojure/clojure "1.8.0"]
+                 ;; Async
+                 [manifold "0.1.8"]
 
                  ;; Loging
                  [org.clojure/tools.logging "0.4.1"]

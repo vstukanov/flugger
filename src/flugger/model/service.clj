@@ -6,12 +6,15 @@
   (-> (uuid/generate-random)
       (uuid/->string)))
 
-(defn list [& opts]
-  (apply entity/list :services opts))
+(defn get-page [& opts]
+  (apply entity/get-page :services opts))
 
 (defn create [name]
-  (entity/insert-and-get :services {:name name
-                                    :private_key (generate-random-key)}))
+  (entity/insert! :services {:name name
+                             :private_key (generate-random-key)}))
 
 (defn update [name]
-  (entity/update-and-get :services {:name name}))
+  (entity/update! :services {:name name}))
+
+(defn get [id]
+  (entity/get-by-id :services id))

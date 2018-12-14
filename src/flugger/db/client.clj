@@ -1,14 +1,24 @@
 (ns flugger.db.client
-  (:require [clojure.java.jdbc :as jdbc]))
+  (:require [postgres.async :as psql]
+            [manifold.deferred :as d]
+            [clojure.core.async :as async :refer [<!! <! >! >!!]]))
 
-(def ^:dynamic *db* {:dbtype "postgresql"
-                     :dbname "flugger"
-                     :host "localhost"
-                     :user "flugger"
-                     :password "flugger"})
+(def db (psql/open-db {:database "flugger"
+                       :hostname "localhost"
+                       :username "flugger"
+                       :password "flugger"}))
 
-(defn query [& args]
-  (apply jdbc/query *db* args))
+(defmacro defdefer [name arg-list f]
+  `(defn ~name
+    (~arg-list
+     (let [defer# (d/deferred)
+           handler# #(if %2 (d/error! defer# %2)
+                         (d/success! defer# %1))
+           arg# (concat ~arg-list [handler#])]
+       (apply ~f db arg#)
+       defer#))))
 
-(defn exec! [& args]
-  (apply jdbc/execute! *db* args))
+(defdefer execute! [sql] psql/execute!)
+(defdefer query! [sql] psql/query!)
+(defdefer insert! [dt m] psql/insert!)
+(defdefer update! [dt m] psql/update!)
