@@ -18,5 +18,3 @@
 
 (defn update [name]
   (entity/update! :services {:name name}))
-
-(def test-service (first @(get-page :start-from 0 :count 1)))

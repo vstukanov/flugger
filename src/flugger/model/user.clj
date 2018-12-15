@@ -10,9 +10,9 @@
   (entity/get-by-external-id :users service-id external-id))
 
 (defn get-page [service-id & props]
-  (apply entity/get-page
+  (apply entity/get-page-related
          :users
-         :where [:= :service_id service-id]
+         :service_id service-id
          props))
 
 (defn create [props]

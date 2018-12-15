@@ -75,3 +75,25 @@ create index if not exists channels_service_id_foreign_id_index
 create index if not exists channels_service_id_index
 	on channels (service_id)
 ;
+
+create table if not exists messages
+(
+	id uuid default uuid_generate_v4() not null
+		constraint messages_pkey
+			primary key,
+	service_id uuid not null,
+	channel_id uuid not null,
+	user_id uuid not null,
+	attributes text,
+	message text not null,
+	is_silent boolean default false not null,
+	created_at timestamp default now() not null,
+	updated_at timestamp default now() not null,
+	enabled boolean default true not null,
+	order_id bigserial not null
+)
+;
+
+create index if not exists messages_channel_id_order_id_index
+	on messages (channel_id asc, order_id desc)
+;

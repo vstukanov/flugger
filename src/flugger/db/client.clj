@@ -1,12 +1,36 @@
 (ns flugger.db.client
   (:require [postgres.async :as psql]
-            [manifold.deferred :as d]
-            [clojure.tools.logging :as log]))
+            [manifold.deferred :as d :refer [chain]]
+            [clojure.tools.logging :as log]
+            [honeysql.core :as sql]))
 
 (def db (psql/open-db {:database "flugger"
                        :hostname "localhost"
                        :username "flugger"
                        :password "flugger"}))
+
+(defn format [sql & {:keys [params]}]
+  (sql/format sql
+              :parameterizer :postgresql
+              :params params))
+
+(defn fetch-many [ctx]
+  (chain ctx #(:rows %)))
+
+(defn fetch-one [ctx]
+  (chain ctx #(:rows %) (first)))
+
+(defn query-many [sql & {:keys [params]}]
+  (-> sql
+      (format :params params)
+      (execute!)
+      (fetch-many)))
+
+(defn query-one [sql & {:keys [params]}]
+  (-> sql
+      (format :params params)
+      (execute!)
+      (fetch-one)))
 
 (defmacro defdefer [name arg-list f]
   `(defn ~name
