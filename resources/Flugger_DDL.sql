@@ -29,7 +29,8 @@ create table if not exists users
 	updated_at timestamp default now() not null,
 	enabled boolean default true,
 	created_at timestamp default now() not null,
-	external_id varchar(36) default uuid_generate_v4() not null
+	external_id varchar(36) default uuid_generate_v4() not null,
+	order_id bigserial not null
 )
 ;
 
@@ -39,6 +40,10 @@ create index if not exists users_service_id_foreign_id_index
 
 create index if not exists users_service_id_index
 	on users (service_id)
+;
+
+create index if not exists users_order_id_index
+	on users (order_id)
 ;
 
 create table if not exists channels

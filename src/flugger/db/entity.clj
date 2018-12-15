@@ -5,16 +5,12 @@
             [flugger.uuid :as uuid]
             [manifold.deferred :refer [chain] :as d]))
 
-(defn- prn-context [ctx]
-  (prn ctx)
-  ctx)
-
 (defn- sql-now []
   (-> (java.util.Date.)
       (.getTime)
       (java.sql.Timestamp.)))
 
-(defn get-first-row [defer]
+(defn- get-first-row [defer]
   (chain defer #(:rows %) first))
 
 (defn pg-format [ctx & {:keys [params]}]
@@ -35,6 +31,16 @@
       (db/execute!)
       (get-first-row)))
 
+(defn get-by-external-id [table service-id external-id]
+  (-> (q/select :*)
+      (q/from table)
+      (q/where [:= :service_id service-id]
+               [:= :external_id external-id]
+               [:= :enabled true])
+      (pg-format)
+      (db/execute!)
+      (get-first-row)))
+
 (defn update! [table id changes]
   (-> (db/update! {:table (name table)
                    :where ["id = $1" id]
@@ -43,14 +49,15 @@
       (get-first-row)))
 
 (defn archive [table id]
-  (update-row table id {:enabled false}))
+  (update! table id {:enabled false}))
 
-(defn get-page [table & {:keys [start-from count] :or {start-from 0 count 10}}]
+(defn get-page [table & {:keys [start-from count where]
+                         :or {start-from 0 count 10}}]
   (-> (q/select :*)
       (q/from table)
       (q/where [:> :order_id start-from])
+      (q/merge-where where)
       (q/limit count)
       (q/order-by :order_id)
       (pg-format)
-      (prn-context)
       (db/query!)))

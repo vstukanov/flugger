@@ -1,7 +1,7 @@
 (ns flugger.db.client
   (:require [postgres.async :as psql]
             [manifold.deferred :as d]
-            [clojure.core.async :as async :refer [<!! <! >! >!!]]))
+            [clojure.tools.logging :as log]))
 
 (def db (psql/open-db {:database "flugger"
                        :hostname "localhost"
@@ -15,6 +15,7 @@
            handler# #(if %2 (d/error! defer# %2)
                          (d/success! defer# %1))
            arg# (concat ~arg-list [handler#])]
+       (log/debug ~arg-list)
        (apply ~f db arg#)
        defer#))))
 
