@@ -4,33 +4,18 @@
             [clojure.tools.logging :as log]
             [honeysql.core :as sql]))
 
-(def db (psql/open-db {:database "flugger"
-                       :hostname "localhost"
-                       :username "flugger"
-                       :password "flugger"}))
+(def db-conf {:database "flugger"
+              :hostname "localhost"
+              :username "flugger"
+              :password "flugger"})
 
-(defn format [sql & {:keys [params]}]
-  (sql/format sql
-              :parameterizer :postgresql
-              :params params))
+(defn open! [conf]
+  (psql/open-db conf))
 
-(defn fetch-many [ctx]
-  (chain ctx #(:rows %)))
+(def db (open! db-conf))
 
-(defn fetch-one [ctx]
-  (chain ctx #(:rows %) (first)))
-
-(defn query-many [sql & {:keys [params]}]
-  (-> sql
-      (format :params params)
-      (execute!)
-      (fetch-many)))
-
-(defn query-one [sql & {:keys [params]}]
-  (-> sql
-      (format :params params)
-      (execute!)
-      (fetch-one)))
+(defn close! []
+  (psql/close-db! db))
 
 (defmacro defdefer [name arg-list f]
   `(defn ~name
@@ -47,3 +32,29 @@
 (defdefer query! [sql] psql/query!)
 (defdefer insert! [dt m] psql/insert!)
 (defdefer update! [dt m] psql/update!)
+
+(defn format [sql & {:keys [params]}]
+  (sql/format sql
+              :parameterizer :postgresql
+              :params params))
+
+(defn fetch-many [ctx]
+  (chain ctx #(:rows %)))
+
+(defn fetch-one [ctx]
+  (chain ctx #(:rows %) first))
+
+(defn query-many [sql & {:keys [params]}]
+  (-> sql
+      (format :params params)
+      (execute!)
+      (fetch-many)))
+
+(defn query-one [sql & {:keys [params]}]
+  (-> sql
+      (format :params params)
+      (execute!)
+      (fetch-one)))
+
+(defn truncat-table! [table]
+  (execute! [(clojure.core/format "TRUNCATE TABLE %s CASCADE;" (name table))]))

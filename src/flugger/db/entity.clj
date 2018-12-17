@@ -11,31 +11,29 @@
       (java.sql.Timestamp.)))
 
 (defn by-page [sql start count]
-  (-> sql
-      (q/merge-where [:> :order_id (or start 0)])
-      (q/merge-order-by [:order_id :asc])
-      (q/limit (or count 10))))
+  (cond-> sql
+    (some? start) (q/merge-where [:> :order_id start])
+    true (q/merge-order-by [:order_id :asc])
+    true (q/limit (or count 10))))
 
 (defn by-page-reverse [sql start count]
-  (-> sql
-      (q/merge-where [:< :order_id (or start "Infinity")])
-      (q/merge-order-by [:order_id :desc])
-      (q/limit (or count 10))))
+  (cond-> sql
+    (some? start) (q/merge-where [:< :order_id start])
+    true (q/merge-order-by [:order_id :desc])
+    true (q/limit (or count 10))))
 
 (defn select-all [table]
   (-> (q/select :*)
+      (q/merge-where [:= :enabled true])
       (q/from table)))
 
 (defn select-related [table fk fv]
   (-> (select-all table)
-      (q/merge-where [:= fk fv]
-                     [:enabled true])))
+      (q/merge-where [:= fk fv])))
 
 (defn get-by-id [table id]
-  (-> (q/select :*)
-      (q/from table)
-      (q/merge-where [:= :id id]
-                     [:= :enabled true])
+  (-> (select-all :table)
+      (q/merge-where [:= :id id])
       (db/query-one)))
 
 (defn get-by-external-id [table service-id external-id]

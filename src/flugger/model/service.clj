@@ -16,5 +16,5 @@
   (entity/insert! :services {:name name
                              :private_key (generate-random-key)}))
 
-(defn update [name]
-  (entity/update! :services {:name name}))
+(defn update [id name]
+  (entity/update! :services id {:name name}))

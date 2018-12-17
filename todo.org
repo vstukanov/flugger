@@ -1,7 +1,7 @@
 #+TITLE: Flugger (Instant messaging platform)
 #+AUTHOR: Valerij Stukanov
 
-* Database [2/3] *
+* Database [3/4] *
   - [X] ASYNC DB client
   - [X] Entity API
   - [-] Models (CRUD operations)
@@ -9,8 +9,8 @@
     - [X] Users
     - [X] Channels
     - [ ] Members
-    - [ ] Messages
-  - [ ] Add DB unit tests (IN memory)
+    - [X] Messages
+  - [X] Add DB unit tests
 
 * Messaging logic [0/6] *
   - [ ] Get channel messages with pagination
