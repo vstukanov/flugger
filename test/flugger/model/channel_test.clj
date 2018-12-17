@@ -19,14 +19,14 @@
   (let [srv @(service/create "test-service")
         sid (:id srv)
         u @(user/create {:name "test-user"
-                        :service_id sid
+                         :service_id sid
                          :external_id "user-uniqu-name"})
         uid (:id u)
         ch @(create {:title "test-channel"
                      :service_id sid
                      :external_id "channel-unique-name"})
         cid (:id ch)
-        m1 @(send-message cid sid uid "test-message")]
+        _ @(add-member cid uid)]
 
     (testing "Models creation"
       (is (= "test-service" (:name srv)))
@@ -34,7 +34,10 @@
       (is (= "test-channel" (:title ch))))
 
     (testing "Send message"
-      (is (= "test-message" (:message m1))))
+      (is (= "test-message" (:message @(send-message cid sid uid "test-message")))))
+
+    (testing "Send message to channel without membership"
+      (is (thrown? Exception @(send-message cid sid "not-exists" "foo"))))
 
     (testing "Retriev messages"
       (let [msgs '("1" "2" "3" "4" "5")
@@ -44,4 +47,20 @@
         (is (= 5 (count sm)))
         (is (= 5 (count rm)))
         (is (= (reverse msgs) (map :message rm)))
-        (is (= '("4" "3" "2" "1") (map :message m2)))))))
+        (is (= '("4" "3" "2" "1") (map :message m2)))))
+
+    (testing "Members"
+      (let [user-names ["u1" "u2" "u3"]
+            ch1 @(create {:title "ch1" :service_id sid})
+            c1id (:id ch1)
+            ch2 @(create {:title "ch2" :service_id sid})
+            c2id (:id ch2)
+            users (doall (for [n user-names] @(user/create {:name n
+                                                            :service_id sid})))
+            _ (doseq [u users] @(add-member c1id (:id u)))
+            _ @(add-user c2id (:id (first users)))
+            ch1m @(get-members c1id)
+            ch2m @(get-members c2id)]
+        (is (= 3 (count users)))
+        (is (= 3 (count ch1m)))
+        (is (= 1 (count ch2m)))))))

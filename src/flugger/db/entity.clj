@@ -5,6 +5,12 @@
             [flugger.uuid :as uuid]
             [manifold.deferred :refer [chain] :as d]))
 
+(defn- jkw [left right]
+  (->> [left right]
+       (map name)
+       (clojure.string/join ".")
+       keyword))
+
 (defn- sql-now []
   (-> (java.util.Date.)
       (.getTime)
@@ -30,6 +36,16 @@
 (defn select-related [table fk fv]
   (-> (select-all table)
       (q/merge-where [:= fk fv])))
+
+(defn get-many-to-many [mt ft fk [ff fv] & {:keys [start-from count]}]
+  (-> (q/select :mt.*)
+      (q/from [ft :ft])
+      (q/merge-where [:= (jkw :ft ff) fv]
+                     [:= :mt.enabled true]
+                     [:> :mt.order_id (or start-from 0)])
+      (q/join [mt :mt] [:= :mt.id (jkw :ft fk)])
+      (q/limit (or count 10))
+      (db/query-many)))
 
 (defn get-by-id [table id]
   (-> (select-all :table)

@@ -97,3 +97,27 @@ create table if not exists messages
 create index if not exists messages_channel_id_order_id_index
 	on messages (channel_id asc, order_id desc)
 ;
+
+create table if not exists members
+(
+        id uuid default uuid_generate_v4() not null
+           constraint members_id_pk
+           primary key,
+	user_id uuid not null,
+	channel_id uuid not null,
+	last_consumed_index integer,
+	muted boolean default false
+)
+;
+
+create index if not exists members_user_id_index
+	on members (user_id)
+;
+
+create index if not exists members_channel_id_index
+	on members (channel_id)
+;
+
+create unique index if not exists members_user_id_channel_id_uindex
+       on members (user_id, channel_id)
+;
