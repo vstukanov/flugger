@@ -8,11 +8,7 @@
 
 (use-fixtures :once with-test-db)
 
-(defn- do-seq
-  ([fn] #(do-seq fn %))
-  ([fn col] (map (comp deref fn) col)))
-
-(defn- send-message-bunch [ml cid sid uid]
+xb(defn- send-message-bunch [ml cid sid uid]
   (map (comp deref #(send-message cid sid uid %)) ml))
 
 (deftest channels
@@ -64,3 +60,16 @@
         (is (= 3 (count users)))
         (is (= 3 (count ch1m)))
         (is (= 1 (count ch2m)))))))
+
+(deftest users
+  (let [srv @(service/create "other service")
+        sid (:id srv)
+        cnames ["ch1" "ch2" "ch3"]
+        u @(user/create {:name "user1" :service_id sid})
+        uid (:id u)
+        chn (doall (for [n cnames] @(create {:title n :service_id sid})))
+        _ (doseq [c chn] @(add-member (:id c) uid))]
+    (testing "Get subscribed channels"
+      (let [sch @(user/get-subscribed-channels uid)]
+        (is (= 3 (count sch)))
+        (is (= (map :id chn) (map :id sch)))))))

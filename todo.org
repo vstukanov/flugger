@@ -1,42 +1,26 @@
 #+TITLE: Flugger (Instant messaging platform)
 #+AUTHOR: Valerij Stukanov
 
-* Database [3/4] *
-  - [X] ASYNC DB client
-  - [X] Entity API
-  - [-] Models (CRUD operations)
-    - [X] Services
-    - [X] Users
-    - [X] Channels
-    - [ ] Members
-    - [X] Messages
-  - [X] Add DB unit tests
+* Version 0.1.0 [1/4] *
+  - [X] Basic Messaging API
+    - [X] Models (Service, User, Channel, Members, Message)
+  - [ ] Event system
+  - [ ] Session system
+  - [ ] RPC system
+    - [ ] HTTP Server (Aleph)
+    - [ ] Text Message Protocal Pack/Unpack (jsonrpc)
+    - [ ] Auth (JWT)
+    - [ ] Validate (clojure spec)
+    - [ ] Resolver
+    - [ ] Handle errors
 
-* Messaging logic [0/6] *
-  - [ ] Get channel messages with pagination
-  - [ ] Send message to channel
-  - [ ] Notify channel members of new message
-  - [ ] Get channel members
-  - [ ] Update consumption horizont status
-
-* Channels logic [0/2] *
-  - [ ] Create channel
-  - [ ] Invite user to channel
-
-* RPC [0/5] *
-  - [ ] Async WebSocket server (aleph)
-  - [ ] RPC message pack/unpack
-  - [ ] Authorize call
-    - [ ] JWT signing check
-    - [ ] Provide context (service, user)
-  - [ ] Validate call (parameters)
-  - [ ] Catch call errors
-
-* Notifications *
-** TODO User bindings
-** TODO FCM Integration
-** TODO APNS Integration
-** TODO Sielent notifications
-* Back Office *
-* New features *
-** TODO Permissions and roles
+* Backlog *
+** TODO Push notifications (APNS, FCM)
+** TODO WebHooks (blocking/async)
+** TODO Back office
+** TODO Message consuption horizont
+** TODO Roles and Permissions
+** TODO User-Channel Invitaiton
+** TODO WebSocket API (Transport)
+** TODO HTTP/2 API (Transport)
+** TODO Binary message format

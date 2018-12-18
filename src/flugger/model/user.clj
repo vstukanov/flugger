@@ -15,6 +15,14 @@
          :service_id service-id
          props))
 
+(defn get-subscribed-channels [user-id & props]
+  (apply entity/get-many-to-many
+         :channels
+         :members
+         :channel_id
+         [:user_id user-id]
+         props))
+
 (defn create [props]
   (let [k [:name :service_id :attributes :external_id]
         p (select-keys props k)]
