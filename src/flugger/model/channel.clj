@@ -1,37 +1,67 @@
 (ns flugger.model.channel
   (:require [flugger.db.entity :as entity]
             [flugger.db.client :as db]
+            [flugger.rpc :refer [defapi]]
             [manifold.deferred :refer [chain]]
             [honeysql.helpers :as q]
-            [flugger.events :as events]))
+            [flugger.events :as events]
+            [struct.core :as st]))
 
-(defn get [id]
-  (entity/get-by-id :channels id))
+(def +uuid!+ [st/required st/uuid-str])
+(def +page-size+ [st/integer [st/in-range 1 50]])
+(def +page-offset+ [st/integer])
+(def +string+ [st/string])
+(def +string!+ [st/required st/string])
 
-(defn get-by-external-id [service-id external-id]
+(defapi get-by-id
+  {:spec {:id +uuid!+}}
+  [id] (entity/get-by-id :channels id))
+
+(defapi get-by-external-id
+  {:spec {:service-id +uuid!+
+          :external-id +string!+}}
+  [service-id external-id]
   (entity/get-by-external-id :channels
                              service-id
                              external-id))
 
-(defn get-page [service-id & props]
-  (apply entity/get-page-related
+(defapi get-page
+  {:spec {:service-id +uuid!+
+          :page-offset +page-offset+
+          :page-size +page-size+}}
+  [service-id page-offset page-size]
+  (entity/get-page-related
          :channels
-         :service_id service-id
-         props))
+         :service-id service-id
+         page-offset page-size))
 
-(defn create [props]
-  (let [k [:title :service_id :attributes :external_id]
-        p (select-keys props k)]
-    (chain (entity/insert! :channels p)
-           (events/emit-event "channel:created"))))
+(defapi create
+  {:spec {:title +string!+
+          :service-id +uuid!+
+          :attributes +string+
+          :external-id +string+}}
+  [title service-id attributes external-id]
+  (chain (entity/insert! :channels {:title title
+                                    :service_id service-id
+                                    :attributes attributes
+                                    :external_id external-id})
+         (events/emit-event "channel:created")))
 
-(defn update [id props]
-  (let [k [:title :attributes :external_id]
-        p (select-keys props k)]
-    (chain (entity/update! :channels id p)
-           (events/emit-event "channel:updated"))))
+(defapi update
+  {:spec {:id +uuid!+
+          :title +string+
+          :attributes +string+
+          :external-id +string+}}
+  [id title attributes external-id]
+  ;; TODO filter empty fields
+  (chain (entity/update! :channels id {:title title
+                                       :attributs attributes
+                                       :external_id external-id})
+         (events/emit-event "channel:updated")))
 
-(defn archive [id]
+(defapi archive
+  {:spec {:id +uuid!+}}
+  [id]
   (chain (entity/archive :channels id)
          (events/emit-event "channel:archived")))
 
@@ -43,7 +73,12 @@
              (db/query-one))
          #(if (some? %) true (throw (Exception. "User does not belongs to channel.")))))
 
-(defn send-message [id service-id user-id message]
+(defapi send-message
+  {:spec [:id +uuid!+
+          :service-id +uuid!+
+          :user-id +uuid!+
+          :message +string+]}
+  [id service-id user-id message]
   (chain (is-member? id user-id)
          (fn [_] (entity/insert! :messages {:service_id service-id
                                             :channel_id id
@@ -51,20 +86,32 @@
                                             :message message}))
          (events/emit-event "message:send")))
 
-(defn get-messages [id & props]
-  (apply entity/get-page-related-reverse
+(defapi get-messages
+  {:spec {:id +uuid!+
+          :page-offset +page-offset+
+          :page-size +page-size+}}
+  [id page-offset page-size]
+  (entity/get-page-related-reverse
          :messages
          :channel_id id
-         props))
+         page-offset page-size))
 
-(defn add-member [id user-id]
+(defapi add-member
+  {:spec {:id +uuid!+
+          :user-id +uuid!+}}
+  [id user-id]
   (chain (entity/insert! :members {:channel_id id
                                    :user_id user-id})
          (events/emit-event "member:invited")))
 
-(defn get-members [id & opts]
-  (apply entity/get-many-to-many
+(defapi get-members
+  {:spec {:id +uuid!+
+          :page-offset +page-offset+
+          :page-size +page-size+}}
+  [id page-offset page-size]
+  (entity/get-many-to-many
          :users
          :members
          :user_id
-         [:channel_id id] opts))
+         [:channel_id id]
+         page-offset page-size))

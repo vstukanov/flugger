@@ -16,17 +16,17 @@
       (.getTime)
       (java.sql.Timestamp.)))
 
-(defn by-page [sql start count]
+(defn by-page [sql offset size]
   (cond-> sql
-    (some? start) (q/merge-where [:> :order_id start])
+    (some? offset) (q/merge-where [:> :order_id offset])
     true (q/merge-order-by [:order_id :asc])
-    true (q/limit (or count 10))))
+    true (q/limit (or size 10))))
 
-(defn by-page-reverse [sql start count]
+(defn by-page-reverse [sql offset size]
   (cond-> sql
-    (some? start) (q/merge-where [:< :order_id start])
+    (some? offset) (q/merge-where [:< :order_id offset])
     true (q/merge-order-by [:order_id :desc])
-    true (q/limit (or count 10))))
+    true (q/limit (or size 10))))
 
 (defn select-all [table]
   (-> (q/select :*)
@@ -37,14 +37,14 @@
   (-> (select-all table)
       (q/merge-where [:= fk fv])))
 
-(defn get-many-to-many [mt ft fk [ff fv] & {:keys [start-from count]}]
+(defn get-many-to-many [mt ft fk [ff fv] po ps]
   (-> (q/select :mt.*)
       (q/from [ft :ft])
       (q/merge-where [:= (jkw :ft ff) fv]
                      [:= :mt.enabled true]
-                     [:> :mt.order_id (or start-from 0)])
+                     [:> :mt.order_id (or po 0)])
       (q/join [mt :mt] [:= :mt.id (jkw :ft fk)])
-      (q/limit (or count 10))
+      (q/limit (or ps 10))
       (db/query-many)))
 
 (defn get-by-id [table id]
@@ -71,17 +71,17 @@
 (defn archive [table id]
   (update! table id {:enabled false}))
 
-(defn get-page [table & {:keys [start-from count]}]
+(defn get-page [table po ps]
   (-> (select-all table)
-      (by-page start-from count)
+      (by-page po ps)
       (db/query-many)))
 
-(defn get-page-related [table fk fv & {:keys [start-from count]}]
+(defn get-page-related [table fk fv po ps]
   (-> (select-related table fk fv)
-      (by-page start-from count)
+      (by-page po ps)
       (db/query-many)))
 
-(defn get-page-related-reverse [table fk fv & {:keys [start-from count]}]
+(defn get-page-related-reverse [table fk fv po ps]
   (-> (select-related table fk fv)
-      (by-page-reverse start-from count)
+      (by-page-reverse po ps)
       (db/query-many)))
